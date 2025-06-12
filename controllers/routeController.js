@@ -7,6 +7,7 @@ export const getSlidesByLocation = (req, res) => {
       l.nama_lokasi,
       r.urutan_langkah,
       r.url_gambar,
+      r.url_gif,
       r.deskripsi_langkah,
       r.arah
     FROM rute r
