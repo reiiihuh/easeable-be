@@ -7,6 +7,12 @@ import authRoutes from './routes/auth.js';
 import feedbackRoutes from './routes/feedback.js';
 import notifikasiRoutes from './routes/notifikasi.js';
 import adminRoutes from './routes/admin.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+
+
+
+
+
 
 dotenv.config();
 const app = express();
@@ -19,6 +25,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/notifikasi', notifikasiRoutes);
 app.use('/api/admin', adminRoutes);
+// app.use('/api', uploadRoutes);
+// app.use('/api/rute', ruteRoutes); // SETOR DATA KE DATABASE
+app.use('/api/upload', uploadRoutes);
 
 
 app.listen(3000, () => {
