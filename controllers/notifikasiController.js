@@ -45,3 +45,41 @@ export const getNotifikasiByMahasiswa = (req, res) => {
     res.json(result);
   });
 };
+
+export const getNotifikasiByAdmin = (req, res) => {
+  const { id_admin } = req.params;
+
+  if (!id_admin) {
+    return res.status(400).json({ message: 'ID admin tidak diberikan' });
+  }
+
+  const sql = `
+SELECT 
+  f.id_feedback,
+  m.nama AS nama_mahasiswa,
+  f.jenis_laporan,
+  f.deskripsi AS deskripsi_feedback,
+  f.tanggal AS tanggal_feedback,
+  n.deskripsi AS respon_admin,
+  n.tanggal_respon
+FROM feedback f
+JOIN mahasiswa m ON f.id_mahasiswa = m.id_mahasiswa
+LEFT JOIN notifikasi n ON f.id_feedback = n.id_feedback
+WHERE n.id_admin = ? OR n.id_admin IS NULL
+ORDER BY f.tanggal DESC;
+
+  `;
+
+  db.query(sql, [id_admin], (err, result) => {
+    if (err) {
+      console.error('SQL Error:', err);
+      return res.status(500).json({ message: 'Gagal mengambil notifikasi', error: err });
+    }
+
+    if (result.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    res.status(200).json(result);
+  });
+};

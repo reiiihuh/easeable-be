@@ -48,5 +48,4 @@ export const loginAdmin = (req, res) => {
   
       res.json({ token, user: { id_admin: user.id_admin, name: user.nama, email: user.email } });
     });
-
 };
