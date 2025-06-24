@@ -4,9 +4,13 @@ import cloudinary from '../config/cloudinary.js';
 export const tambahRuteLengkap = async (req, res) => {
   try {
     const { nama_lokasi, deskripsi, info, langkahs } = JSON.parse(req.body.data);
-    const placeholderFile = req.files['placeholder']?.[0];
+    const placeholderFile = req.files?.['placeholder']?.[0];
 
-    // Upload placeholder ke folder lokasi
+    if (!placeholderFile) {
+      return res.status(400).json({ message: 'Gambar placeholder tidak ditemukan' });
+    }
+
+    // Upload placeholder
     const placeholderUrl = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: `easeable/lokasi/${nama_lokasi}` },
@@ -18,7 +22,7 @@ export const tambahRuteLengkap = async (req, res) => {
       stream.end(placeholderFile.buffer);
     });
 
-    // Simpan data lokasi ke DB
+    // Simpan lokasi
     const lokasiQuery = `
       INSERT INTO lokasi (nama_lokasi, deskripsi, info, url_placeholder)
       VALUES (?, ?, ?, ?)
@@ -33,36 +37,46 @@ export const tambahRuteLengkap = async (req, res) => {
 
       const id_lokasi = result.insertId;
 
-      // Loop simpan langkah-langkah
-      for (let i = 0; i < langkahs.length; i++) {
-        const imgBuffer = req.files['langkah_gambar'][i].buffer;
-        const gifBuffer = req.files['langkah_gif']?.[i]?.buffer;
+      // Validasi array file dan data langkah
+      const gambarList = req.files?.['langkah_gambar'] || [];
+      const gifList = req.files?.['langkah_gif'] || [];
 
-        const [url_gambar, url_gif] = await Promise.all([
-          new Promise((resolve, reject) => {
+      for (let i = 0; i < langkahs.length; i++) {
+        const langkah = langkahs[i];
+        const gambarFile = gambarList[i];
+
+        if (!gambarFile) {
+          console.warn(`Langkah ke-${i + 1} tidak memiliki gambar, dilewati.`);
+          continue;
+        }
+
+        const url_gambar = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: `easeable/lokasi/${nama_lokasi}/langkah` },
+            (err, result) => {
+              if (err) reject(err);
+              else resolve(result.secure_url);
+            }
+          );
+          stream.end(gambarFile.buffer);
+        });
+
+        let url_gif = null;
+        const gifFile = gifList[i];
+        if (gifFile) {
+          url_gif = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
-              { folder: `easeable/lokasi/${nama_lokasi}/langkah` },
+              { folder: `easeable/lokasi/${nama_lokasi}/gif` },
               (err, result) => {
                 if (err) reject(err);
                 else resolve(result.secure_url);
               }
             );
-            stream.end(imgBuffer);
-          }),
-          gifBuffer
-            ? new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream(
-                  { folder: `easeable/lokasi/${nama_lokasi}/gif` },
-                  (err, result) => {
-                    if (err) reject(err);
-                    else resolve(result.secure_url);
-                  }
-                );
-                stream.end(gifBuffer);
-              })
-            : null
-        ]);
+            stream.end(gifFile.buffer);
+          });
+        }
 
+        // Simpan langkah ke DB
         const ruteQuery = `
           INSERT INTO rute (id_lokasi, urutan_langkah, deskripsi_langkah, arah, url_gambar, url_gif)
           VALUES (?, ?, ?, ?, ?, ?)
@@ -70,14 +84,14 @@ export const tambahRuteLengkap = async (req, res) => {
         const ruteValues = [
           id_lokasi,
           i + 1,
-          langkahs[i].deskripsi_langkah,
-          langkahs[i].arah,
+          langkah.deskripsi_langkah,
+          langkah.arah,
           url_gambar,
           url_gif
         ];
 
         db.query(ruteQuery, ruteValues, (err) => {
-          if (err) console.error('Gagal insert langkah ke DB:', err);
+          if (err) console.error(`Gagal insert langkah ke-${i + 1}:`, err);
         });
       }
 
