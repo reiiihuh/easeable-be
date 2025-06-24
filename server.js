@@ -10,23 +10,25 @@ import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 
-
-
-
-
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.use('/api', slideRoutes);
+
 app.use('/api', locationRoutes);
+
 app.use('/api/auth', authRoutes);
+
 app.use('/api/feedback', feedbackRoutes);
+
 app.use('/api/notifikasi', notifikasiRoutes);
+
 app.use('/api/admin', adminRoutes);
-// app.use('/api', uploadRoutes);
+
 // app.use('/api/rute', ruteRoutes); // SETOR DATA KE DATABASE
+
 app.use('/api/upload', uploadRoutes);
 
 
