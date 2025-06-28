@@ -40,7 +40,7 @@ export const loginMahasiswa = (req, res) => {
     //   return res.status(400).json({ message: 'Gunakan email SSO Telkom University.' });
     // }
   
-    const sql = 'SELECT * FROM mahasiswa WHERE username = ?';
+    const sql = 'SELECT * FROM mahasiswa WHERE BINARY username = ?';
     db.query(sql, [username], async (err, result) => {
       if (err) return res.status(500).json({ error: err });
   

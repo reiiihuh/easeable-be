@@ -34,7 +34,7 @@ export const loginAdmin = (req, res) => {
     //   return res.status(400).json({ message: 'Gunakan email SSO Telkom University.' });
     // }
   
-    const sql = 'SELECT * FROM admin WHERE username = ?';
+    const sql = 'SELECT * FROM admin WHERE BINARY username = ?';
     db.query(sql, [username], async (err, result) => {
       if (err) return res.status(500).json({ error: err });
   
